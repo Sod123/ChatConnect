@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ChatConnect - Profile</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .profile-box {
+            width: 92%;
+            max-width: 420px;
+            background: white;
+            padding: 30px 24px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .welcome {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 7px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 18px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #message {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+
+        .email {
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="profile-box">
+
+    <h1>ChatConnect</h1>
+
+    <div class="welcome">
+        Create your profile
+    </div>
+
+    <div class="email" id="userEmail">
+        Checking account...
+    </div>
+
+    <label>Username</label>
+
+    <input
+        type="text"
+        id="username"
+        placeholder="Example: User123"
+        maxlength="30"
+    >
+
+    <label>Display Name</label>
+
+    <input
+        type="text"
+        id="displayName"
+        placeholder="Example: User123"
+        maxlength="50"
+    >
+
+    <button id="saveBtn">
+        Create Profile
+    </button>
+
+    <div id="message"></div>
+
+</div>
+
+
+<script type="module">
+
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+import {
+    getAuth,
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    serverTimestamp,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDTGE8Lq2gLLmODwxrbtaqR49D0xxsU_OM",
+    authDomain: "chatconnect-26efa.firebaseapp.com",
+    projectId: "chatconnect-26efa",
+    storageBucket: "chatconnect-26efa.firebasestorage.app",
+    messagingSenderId: "1051940912750",
+    appId: "1:1051940912750:web:4363352013d1fdcf62707f"
+};
+
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+const db = getFirestore(app);
+
+
+let currentUser = null;
+
+
+const message = document.getElementById("message");
+
+const userEmail = document.getElementById("userEmail");
+
+const usernameInput = document.getElementById("username");
+
+const displayNameInput = document.getElementById("displayName");
+
+const saveBtn = document.getElementById("saveBtn");
+
+
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+
+        window.location.href = "index.html";
+
+        return;
+    }
+
+    currentUser = user;
+
+    userEmail.textContent = user.email;
+
+    try {
+
+        const userRef = doc(db, "users", user.uid);
+
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+
+            const data = userSnap.data();
+
+            usernameInput.value = data.username || "";
+
+            displayNameInput.value = data.displayName || "";
+
+            saveBtn.textContent = "Update Profile";
+
+        }
+
+    } catch (error) {
+
+        message.textContent = error.message;
+
+    }
+
+});
+
+
+saveBtn.onclick = async function () {
+
+    if (!currentUser) {
+
+        message.textContent = "Please login first.";
+
+        return;
+    }
+
+
+    const username =
+        usernameInput.value.trim();
+
+    const displayName =
+        displayNameInput.value.trim();
+
+
+    if (!username) {
+
+        message.textContent =
+            "Please enter a username.";
+
+        return;
+    }
+
+
+    if (!displayName) {
+
+        message.textContent =
+            "Please enter a display name.";
+
+        return;
+    }
+
+
+    if (username.length < 3) {
+
+        message.textContent =
+            "Username must contain at least 3 characters.";
+
+        return;
+    }
+
+
+    saveBtn.disabled = true;
+
+    saveBtn.textContent = "Saving...";
+
+
+    try {
+
+        const userRef =
+            doc(db, "users", currentUser.uid);
+
+
+        await setDoc(
+            userRef,
+            {
+                username: username,
+                displayName: displayName,
+                email: currentUser.email,
+                uid: currentUser.uid,
+                createdAt: serverTimestamp()
+            },
+            {
+                merge: true
+            }
+        );
+
+
+        message.textContent =
+            "Profile created successfully!";
+
+
+        saveBtn.textContent =
+            "Profile Saved";
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "Error: " + error.message;
+
+        saveBtn.disabled = false;
+
+        saveBtn.textContent =
+            "Create Profile";
+    }
+
+};
+
+</script>
+
+</body>
+</html>
