@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatConnect - Login</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .box {
+            width: 92%;
+            max-width: 400px;
+            background: white;
+            padding: 30px 24px;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+
+        #loginBtn {
+            background: #2563eb;
+            color: white;
+        }
+
+        #registerBtn {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        #forgotBtn {
+            background: transparent;
+            color: #2563eb;
+        }
+
+        #message {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <h1> ChatConnect</h1>
+
+    <div class="subtitle">
+        Secure messaging without a phone number
+    </div>
+
+    <input
+        type="email"
+        id="email"
+        placeholder="Email address"
+        autocomplete="email"
+    >
+
+    <input
+        type="password"
+        id="password"
+        placeholder="Password"
+        autocomplete="current-password"
+    >
+
+    <button id="loginBtn">Login</button>
+
+    <button id="registerBtn">Create Account</button>
+
+    <button id="forgotBtn">Forgot Password?</button>
+
+    <div id="message"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDTGE8Lq2gLLmODwxrbtaqR49D0xxsU_OM",
+    authDomain: "chatconnect-26efa.firebaseapp.com",
+    projectId: "chatconnect-26efa",
+    storageBucket: "chatconnect-26efa.firebasestorage.app",
+    messagingSenderId: "1051940912750",
+    appId: "1:1051940912750:web:4363352013d1fdcf62707f"
+};
+
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+
+const email = document.getElementById("email");
+const password = document.getElementById("password");
+const message = document.getElementById("message");
+
+
+function showMessage(text) {
+    message.textContent = text;
+}
+
+
+// LOGIN
+document.getElementById("loginBtn").onclick = async function () {
+
+    const emailValue = email.value.trim();
+    const passwordValue = password.value;
+
+    if (!emailValue || !passwordValue) {
+        showMessage("Please enter email and password.");
+        return;
+    }
+
+    showMessage("Logging in...");
+
+    try {
+
+        const userCredential =
+            await signInWithEmailAndPassword(
+                auth,
+                emailValue,
+                passwordValue
+            );
+
+        showMessage("Login successful!");
+
+        console.log("Firebase UID:", userCredential.user.uid);
+
+    } catch (error) {
+
+        showMessage(error.message);
+
+    }
+
+};
+
+
+// CREATE ACCOUNT
+document.getElementById("registerBtn").onclick = async function () {
+
+    const emailValue = email.value.trim();
+    const passwordValue = password.value;
+
+    if (!emailValue || !passwordValue) {
+        showMessage("Enter email and password to create account.");
+        return;
+    }
+
+    if (passwordValue.length < 6) {
+        showMessage("Password must be at least 6 characters.");
+        return;
+    }
+
+    showMessage("Creating account...");
+
+    try {
+
+        const userCredential =
+            await createUserWithEmailAndPassword(
+                auth,
+                emailValue,
+                passwordValue
+            );
+
+        showMessage("Account created successfully!");
+
+        console.log("New Firebase UID:", userCredential.user.uid);
+
+    } catch (error) {
+
+        showMessage(error.message);
+
+    }
+
+};
+
+
+// FORGOT PASSWORD
+document.getElementById("forgotBtn").onclick = async function () {
+
+    const emailValue = email.value.trim();
+
+    if (!emailValue) {
+        showMessage("Enter your email address first.");
+        return;
+    }
+
+    try {
+
+        await sendPasswordResetEmail(
+            auth,
+            emailValue
+        );
+
+        showMessage("Password reset email sent.");
+
+    } catch (error) {
+
+        showMessage(error.message);
+
+    }
+
+};
+
+</script>
+
+</body>
+</html>
