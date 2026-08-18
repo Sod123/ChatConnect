@@ -193,7 +193,9 @@ document.getElementById("loginBtn").onclick = async function () {
 
         showMessage("Login successful!");
 
-        console.log("Firebase UID:", userCredential.user.uid);
+setTimeout(() => {
+    window.location.href = "profile.html";
+}, 500);
 
     } catch (error) {
 
