@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ChatConnect</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+}
+
+.header {
+    background: #2563eb;
+    color: white;
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    font-size: 23px;
+    font-weight: bold;
+}
+
+.logout {
+    background: rgba(255,255,255,0.18);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.4);
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.container {
+    max-width: 600px;
+    margin: auto;
+}
+
+.profile {
+    background: white;
+    padding: 18px;
+    margin: 15px;
+    border-radius: 15px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+}
+
+.avatar {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: bold;
+    float: left;
+    margin-right: 14px;
+}
+
+.profile h2 {
+    margin: 4px 0;
+}
+
+.profile p {
+    margin: 4px 0;
+    color: #64748b;
+}
+
+.clear {
+    clear: both;
+}
+
+.search-box {
+    margin: 15px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 16px;
+    background: white;
+}
+
+.section-title {
+    margin: 20px 15px 10px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.user-card {
+    background: white;
+    margin: 8px 15px;
+    padding: 15px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 13px;
+}
+
+.user-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.user-username {
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.message {
+    text-align: center;
+    color: #64748b;
+    padding: 20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+
+    <div class="logo">
+        ChatConnect
+    </div>
+
+    <button class="logout" id="logoutBtn">
+        Logout
+    </button>
+
+</div>
+
+
+<div class="container">
+
+    <div class="profile">
+
+        <div class="avatar" id="myAvatar">
+            U
+        </div>
+
+        <h2 id="myName">
+            Loading...
+        </h2>
+
+        <p id="myUsername">
+            Loading...
+        </p>
+
+        <p id="myEmail">
+            Loading...
+        </p>
+
+        <div class="clear"></div>
+
+    </div>
+
+
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="🔍 Search username..."
+            autocomplete="off"
+        >
+
+    </div>
+
+
+    <div class="section-title">
+        Users
+    </div>
+
+
+    <div id="results">
+
+        <div class="message">
+            Search for a username to start a chat.
+        </div>
+
+    </div>
+
+</div>
+
+
+<script type="module">
+
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+import {
+    getAuth,
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+import {
+    getFirestore,
+    collection,
+    getDocs,
+    doc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDTGE8Lq2gLLmODwxrbtaqR49D0xxsU_OM",
+    authDomain: "chatconnect-26efa.firebaseapp.com",
+    projectId: "chatconnect-26efa",
+    storageBucket: "chatconnect-26efa.firebasestorage.app",
+    messagingSenderId: "1051940912750",
+    appId: "1:1051940912750:web:4363352013d1fdcf62707f"
+};
+
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+const db = getFirestore(app);
+
+
+let currentUser = null;
+let allUsers = [];
+
+
+const myName =
+    document.getElementById("myName");
+
+const myUsername =
+    document.getElementById("myUsername");
+
+const myEmail =
+    document.getElementById("myEmail");
+
+const myAvatar =
+    document.getElementById("myAvatar");
+
+const searchInput =
+    document.getElementById("searchInput");
+
+const results =
+    document.getElementById("results");
+
+
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+
+        window.location.href = "index.html";
+
+        return;
+    }
+
+    currentUser = user;
+
+    myEmail.textContent = user.email;
+
+    await loadMyProfile();
+
+    await loadUsers();
+
+});
+
+
+async function loadMyProfile() {
+
+    try {
+
+        const userRef =
+            doc(db, "users", currentUser.uid);
+
+        const snapshot =
+            await getDoc(userRef);
+
+        if (snapshot.exists()) {
+
+            const data = snapshot.data();
+
+            myName.textContent =
+                data.displayName || "User";
+
+            myUsername.textContent =
+                "@" + (data.username || "");
+
+            myAvatar.textContent =
+                (data.displayName || "U")
+                .charAt(0)
+                .toUpperCase();
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}
+
+
+async function loadUsers() {
+
+    try {
+
+        const snapshot =
+            await getDocs(collection(db, "users"));
+
+        allUsers = [];
+
+        snapshot.forEach((item) => {
+
+            const data = item.data();
+
+            if (item.id !== currentUser.uid) {
+
+                allUsers.push({
+                    id: item.id,
+                    username: data.username || "",
+                    displayName: data.displayName || "User"
+                });
+
+            }
+
+        });
+
+    } catch (error) {
+
+        results.innerHTML =
+            '<div class="message">Unable to load users.</div>';
+
+        console.error(error);
+
+    }
+
+}
+
+
+searchInput.addEventListener("input", function () {
+
+    const search =
+        searchInput.value.trim().toLowerCase();
+
+    if (!search) {
+
+        results.innerHTML =
+            '<div class="message">Search for a username to start a chat.</div>';
+
+        return;
+
+    }
+
+    const matches =
+        allUsers.filter(user =>
+            user.username.toLowerCase().includes(search) ||
+            user.displayName.toLowerCase().includes(search)
+        );
+
+    displayUsers(matches);
+
+});
+
+
+function displayUsers(users) {
+
+    if (users.length === 0) {
+
+        results.innerHTML =
+            '<div class="message">No users found.</div>';
+
+        return;
+    }
+
+
+    results.innerHTML = "";
+
+
+    users.forEach(user => {
+
+        const card =
+            document.createElement("div");
+
+        card.className = "user-card";
+
+
+        const avatar =
+            document.createElement("div");
+
+        avatar.className = "user-avatar";
+
+        avatar.textContent =
+            user.displayName.charAt(0).toUpperCase();
+
+
+        const information =
+            document.createElement("div");
+
+
+        const name =
+            document.createElement("div");
+
+        name.className = "user-name";
+
+        name.textContent =
+            user.displayName;
+
+
+        const username =
+            document.createElement("div");
+
+        username.className = "user-username";
+
+        username.textContent =
+            "@" + user.username;
+
+
+        information.appendChild(name);
+
+        information.appendChild(username);
+
+        card.appendChild(avatar);
+
+        card.appendChild(information);
+
+
+        card.onclick = function () {
+
+            alert(
+                "Private chat with " +
+                user.displayName +
+                " will be added next."
+            );
+
+        };
+
+
+        results.appendChild(card);
+
+    });
+
+}
+
+
+document.getElementById("logoutBtn")
+    .onclick = async function () {
+
+    await signOut(auth);
+
+    window.location.href = "index.html";
+
+};
+
+</script>
+
+</body>
+</html>
