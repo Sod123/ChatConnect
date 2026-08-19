@@ -451,13 +451,22 @@ function displayUsers(users) {
         card.appendChild(information);
 
 
-        card.onclick = function () {
+        <!--card.onclick = function () {
 
             alert(
                 "Private chat with " +
                 user.displayName +
                 " will be added next."
-            );
+            );-->
+
+card.onclick = function () {
+
+    window.location.href =
+        "chat.html?uid=" +
+        encodeURIComponent(user.id);
+
+};
+                
 
         };
 
