@@ -437,6 +437,20 @@ onAuthStateChanged(
 
         await loadOtherUser();
 
+// Create/update private chat information
+await setDoc(
+    doc(db, "chats", chatId),
+    {
+        participants: [
+            currentUser.uid,
+            otherUid
+        ],
+        updatedAt: serverTimestamp()
+    },
+    {
+        merge: true
+    }
+);
 
         listenForMessages();
 
