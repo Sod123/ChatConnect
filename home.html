@@ -389,7 +389,7 @@ searchInput.addEventListener("input", function () {
 });
 
 
-function displayUsers(users) {
+<!-- function displayUsers(users) {
 
     if (users.length === 0) {
 
@@ -462,6 +462,85 @@ function displayUsers(users) {
 };
                 
 
+        }; 
+                  
+
+
+        results.appendChild(card);
+
+    });
+    
+
+} -->
+function displayUsers(users) {
+
+    if (users.length === 0) {
+
+        results.innerHTML =
+            '<div class="message">No users found.</div>';
+
+        return;
+    }
+
+    results.innerHTML = "";
+
+    users.forEach(user => {
+
+        const card =
+            document.createElement("div");
+
+        card.className = "user-card";
+
+
+        const avatar =
+            document.createElement("div");
+
+        avatar.className = "user-avatar";
+
+        avatar.textContent =
+            user.displayName
+                .charAt(0)
+                .toUpperCase();
+
+
+        const information =
+            document.createElement("div");
+
+
+        const name =
+            document.createElement("div");
+
+        name.className = "user-name";
+
+        name.textContent =
+            user.displayName;
+
+
+        const username =
+            document.createElement("div");
+
+        username.className = "user-username";
+
+        username.textContent =
+            "@" + user.username;
+
+
+        information.appendChild(name);
+
+        information.appendChild(username);
+
+        card.appendChild(avatar);
+
+        card.appendChild(information);
+
+
+        // OPEN PRIVATE CHAT
+        card.onclick = function () {
+
+            window.location.href =
+                "chat.html?uid=" +
+                encodeURIComponent(user.id);
+
         };
 
 
@@ -470,7 +549,6 @@ function displayUsers(users) {
     });
 
 }
-
 
 document.getElementById("logoutBtn")
     .onclick = async function () {
